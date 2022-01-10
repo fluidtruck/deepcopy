@@ -43,8 +43,6 @@ branches:
         contexts:
           - lint
           - test
-          - build
-          - deploy (apps-stage)
           - boost-security-scan
           - Semantic Pull Request
       restrictions:

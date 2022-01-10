@@ -26,38 +26,6 @@ jobs:
           access_token: ${{ secrets.GITHUB_TOKEN }}
           all_but_latest: true
 
-      - name: Find Existing Deployment Comment
-        uses: sandeshjangam/comment-actions@v1
-        id: find-comment
-        with:
-          token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
-          type: find
-          number: ${{ github.event.pull_request.number }}
-          search_term: "<!-- fluidtruck-ci: helm -->"
-
-      - name: Delete Existing Deployment Comment
-        if: ${{ steps.find-comment.outputs.comment_id }}
-        uses: sandeshjangam/comment-actions@v1
-        with:
-          token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
-          type: delete
-          comment_id: ${{ steps.find-comment.outputs.comment_id }}
-
-      - name: Create Deployment Comment
-        uses: sandeshjangam/comment-actions@v1
-        id: comment
-        with:
-          token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
-          type: create
-          number: ${{ github.event.pull_request.number }}
-          body: |
-            <!-- fluidtruck-ci: helm -->
-            This pull request is being deployed with Helm.
-
-            🔍  Inspect: https://github.com/fluidtruck/telematics/actions/runs/${{ github.run_id }}
-            ✅  Preview: _Pending..._
-            🙈  Coverage: _Pending..._
-
       - name: Checkout
         uses: actions/checkout@v2
 
