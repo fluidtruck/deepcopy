@@ -1,0 +1,18 @@
+envVars:
+  ENV: prod
+  NEW_RELIC_APP_NAME: deepcopy-prod
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 30
+
+# ingress:
+#   tls: true
+#   hostname: deepcopy.fluidtruck.io
+
+# vault:
+#   secrets:
+#     - name: .env
+#       path: backend/deepcopy/data/prod/env

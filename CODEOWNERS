@@ -1,0 +1,10 @@
+# Use this file to determine who you want pull request
+# reviews from by default.
+
+# This is a global default for all files.
+* @fluidtruck/backend
+
+# The below if for our DevOps team. Please do not change
+# change this.
+/.github/workflows/ @fluidtruck/devops
+/chart/ @fluidtruck/devops

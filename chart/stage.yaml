@@ -1,0 +1,22 @@
+envVars:
+  ENV: stage
+  NEW_RELIC_APP_NAME: deepcopy-stage
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 30
+
+# ingress:
+#   hostname: stage.deepcopy.fluidtruck.io
+#   extraTls:
+#     - secretName: "deepcopy-tls"
+#       hosts:
+#         - "*.deepcopy.fluidtruck.io"
+
+# vault:
+#   enabled: true
+#   secrets:
+#     - name: .env
+#       path: backend/deepcopy/data/stage/env

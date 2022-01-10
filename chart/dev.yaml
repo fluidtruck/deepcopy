@@ -1,0 +1,17 @@
+envVars:
+  ENV: dev
+  NEW_RELIC_APP_NAME: "deepcopy-{{ .Release.Name }}"
+
+# ingress:
+#   enabled: true
+#   hostname: "{{ .Release.Name }}.deepcopy.fluidtruck.io"
+#   extraTls:
+#     - secretName: "deepcopy-tls"
+#       hosts:
+#         - "*.deepcopy.fluidtruck.io"
+
+# vault:
+#   enabled: true
+#   secrets:
+#     - name: .env
+#       path: backend/deepcopy/data/stage/env

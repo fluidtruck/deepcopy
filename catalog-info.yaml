@@ -1,0 +1,14 @@
+
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: deepcopy
+  description: The deepcopy library.
+  annotations:
+    github.com/project-slug: 'fluidtruck/deepcopy'
+  tags:
+    - golang
+spec:
+  type: service
+  lifecycle: experimental
+  owner: backend

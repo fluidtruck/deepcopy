@@ -1,0 +1,27 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v2
+        with:
+          token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
+          release-type: simple
+          bump-minor-pre-major: true
+          changelog-types: |-
+            [
+              {"type":"feat","section":":sparkles: Features","hidden":false},
+              {"type":"fix","section":":bug: Bug Fixes","hidden":false},
+              {"type":"style","section":":gem: Styles","hidden":false},
+              {"type":"refactor","section":":hammer: Code Refactoring","hidden":false},
+              {"type":"perf","section":":rocket: Performance Improvements","hidden":false},
+              {"type":"build","section":":package: Builds","hidden":false},
+              {"type":"chore","section":":wrench: Chores","hidden":false},
+              {"type":"revert","section":":warning: Reverts","hidden":false}
+            ]

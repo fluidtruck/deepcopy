@@ -1,0 +1,72 @@
+name: deploy
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+      - v[0-9]+.[0-9]+.[0-9]+-*
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cluster:
+          - legacy-apps-prod
+          # - apps-prod
+        include:
+          - cluster: legacy-apps-prod
+            cluster_name: LEGACY_GKE_CLUSTER_APPS_PROD_NAME
+            cluster_location: LEGACY_GKE_CLUSTER_APPS_PROD_LOCATION
+            cluster_credentials: LEGACY_GKE_CLUSTER_APPS_PROD_CREDENTIALS
+          # - cluster: apps-prod
+          #   cluster_name: GKE_CLUSTER_APPS_PROD_NAME
+          #   cluster_location: GKE_CLUSTER_APPS_PROD_LOCATION
+          #   cluster_credentials: GKE_CLUSTER_APPS_PROD_CREDENTIALS
+    steps:
+      - name: Wait for Previous Runs
+        uses: ahmadnassri/action-workflow-queue@v1
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cluster Authentication
+        uses: google-github-actions/get-gke-credentials@v0.3.0
+        with:
+          cluster_name: ${{ secrets[matrix.cluster_name] }}
+          location: ${{ secrets[matrix.cluster_location] }}
+          credentials: ${{ secrets[matrix.cluster_credentials] }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+
+      - name: Add Helm Repo
+        run: helm repo add fluidtruck https://fluidtruck.github.io/helm-charts
+
+      - name: Deploy
+        run: |
+          RELEASE_NAME="deepcopy"
+          IMAGE_TAG="$(cat ./version.txt)"
+          HELM_STATUS=$(helm status ${RELEASE_NAME} -n ${RELEASE_NAME} -o json | jq -r '.info.status')
+          HELM_VERSION=$(helm status ${RELEASE_NAME} -n ${RELEASE_NAME} -o json | jq -r '.version')
+
+          if [ -n "${HELM_STATUS}" ] && [[ "${HELM_STATUS}" != "deployed" ]]; then
+            if [[ "${HELM_VERSION}" == "1" ]]; then
+              helm uninstall ${RELEASE_NAME} -n ${RELEASE_NAME} --timeout 300s
+            else
+              helm rollback ${RELEASE_NAME} -n ${RELEASE_NAME} --wait --timeout 300s
+            fi
+          fi
+
+          echo "==> RELEASE_NAME: $RELEASE_NAME"
+          echo "==> IMAGE_TAG: $IMAGE_TAG"
+
+          helm upgrade ${RELEASE_NAME} fluidtruck/golang \
+            --version "4.0.1" \
+            --install \
+            --atomic \
+            --namespace ${RELEASE_NAME} \
+            --create-namespace \
+            --set image.tag="${IMAGE_TAG}" \
+            -f ./chart/common.yaml \
+            -f ./chart/prod.yaml

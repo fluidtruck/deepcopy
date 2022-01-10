@@ -1,0 +1,10 @@
+.github
+chart
+vendor
+.editorconfig
+.gitignore
+catalog-info.yaml
+CODEOWNERS
+Dockerfile
+README.md
+version.txt
