@@ -31,7 +31,6 @@ const (
 
 var (
 	timeType           = reflect.TypeOf(time.Time{})
-	timePtrType        = reflect.TypeOf(&time.Time{})
 	timestamppbType    = reflect.TypeOf(timestamppb.Timestamp{})
 	timestamppbPtrType = reflect.TypeOf(&timestamppb.Timestamp{})
 )
