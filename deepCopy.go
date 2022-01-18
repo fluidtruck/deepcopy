@@ -26,7 +26,7 @@ func DeepCopy(input, output interface{}) error {
 }
 
 const (
-	PB_STRUCT_TAG = "pb"
+	DC_STRUCT_TAG = "dc"
 )
 
 var (
@@ -42,6 +42,17 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 		return err
 	}
 	done := false
+
+	fmt.Println("outValue.Kind", outValue.Kind())
+
+	// check for string exceptions
+	if inValue.Kind() == reflect.String {
+		noError := parseStringFlexibly(inValue, outValue)
+		if !noError {
+			return errCouldNotConvert
+		}
+		return
+	}
 
 	switch outValue.Kind() {
 	default:
@@ -238,8 +249,8 @@ func fieldsMatch(inField, outField reflect.StructField) bool {
 	if inFieldName == "" || outFieldName == "" {
 		return false
 	}
-	inFieldTag := strings.ToLower(inField.Tag.Get(PB_STRUCT_TAG))
-	outFieldTag := strings.ToLower(outField.Tag.Get(PB_STRUCT_TAG))
+	inFieldTag := strings.ToLower(inField.Tag.Get(DC_STRUCT_TAG))
+	outFieldTag := strings.ToLower(outField.Tag.Get(DC_STRUCT_TAG))
 
 	if inFieldName == outFieldName || inFieldName == outFieldTag || outFieldName == inFieldTag {
 		return true
@@ -251,6 +262,7 @@ func fieldsMatch(inField, outField reflect.StructField) bool {
 // taken from reflect in go@1.17:
 func CanConvert(v reflect.Value, t reflect.Type) bool {
 	vt := v.Type()
+
 	if !vt.ConvertibleTo(t) {
 		return false
 	}
@@ -264,4 +276,23 @@ func CanConvert(v reflect.Value, t reflect.Type) bool {
 		}
 	}
 	return true
+}
+
+func parseStringFlexibly(inValue, outValue reflect.Value) bool {
+	if inValue.Kind() != reflect.String {
+		return false
+	}
+	switch outValue.Kind() {
+	case reflect.Bool:
+		s := strings.ToLower(inValue.String())
+		if s == "t" || s == "true" {
+			outValue.SetBool(true)
+			return true
+		} else if s == "f" || s == "false" {
+			outValue.SetBool(false)
+			return true
+		}
+	}
+
+	return false
 }

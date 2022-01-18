@@ -11,7 +11,7 @@ DeepCopy allows for extraordinary flexibility in converting
 between different structs and other types. It performs automatic type casting
 for all fields that typically require manual conversion, such
 as between uint64 and uint or int and string. In addition, it automatically converts
-between pointers and non-pointers at any level. It can handle
+between pointers and non-pointers at any level (e.g. **string to string and vice versa). It can handle
 slices, maps, nested structs, time.Time objects,
 protobuf.timestamppb objects, and more. It additionally supports
 an optional tag used to manually set field names for more
@@ -63,6 +63,7 @@ Call DeepCopy by passing ```objA``` and a pointer to ```objB``` as arguments.
 err := deepCopy.DeepCopy(objA, &objB)
 ```
 > Note: The second argument to DeepCopy must ***always*** be a pointer.
+> Otherwise, an [error](#expected-pointer) will be returned.
 
 Done! Now, ```objB```has all of the field values of ```objA```
 recursively copied over. \
@@ -83,6 +84,7 @@ as arguments.
 err := deepCopy.DeepCopy(objA, &copyA)
 ```
 > Note: The second argument to DeepCopy must ***always*** be a pointer.
+> Otherwise, an [error](#expected-pointer) will be returned.
 
 Done! Now  ```copyA``` is an exactly identical copy of ```objA```.
 
@@ -97,6 +99,7 @@ Call DeepCopy by passing ```objA``` and a pointer to ```objB``` as arguments.
 err := deepCopy.DeepCopy(objA, &objB)
 ```
 > Note: The second argument to DeepCopy must ***always*** be a pointer.
+> Otherwise, an [error](#expected-pointer) will be returned.
 
 Done! Now, ```objB``` will have an equivalent value to ```objA```. \
 If ```objB``` was a string, then ```objB``` will have value ```"4"```. \
@@ -111,7 +114,7 @@ Let ```objB``` be an object of type ```StructB```.
 err := deepcopy.DeepCopy(objA, &objB)
 ```
 
-All field ofs ```objA``` that
+Assuming that ```objA``` is a struct, then all fields of ```objA``` that
 * (1) are not null,
 
 and
@@ -120,7 +123,7 @@ and
 will be copied over to the matching field in ```objB```.
 
 Additionally, all existing fields in ```objB``` that are ***not
-overwritten*** by ```objA``` will remain in ```objA```.
+overwritten*** by ```objA``` will remain in ```objB```.
 
 ### Matching Fields
 Fields are considered matching if they have the same name (case-insensitive)
@@ -129,7 +132,7 @@ or if one field's name matches another field's "dc" tag. \
 Field matches can be manually set by using the "dc" tag.\
 \
 In the following example, all fields in ```StructA``` are considered
-to have a matching field in ```StructB```.
+to have a respective matching field in ```StructB```.
 ```go
 type StructA struct {
    FieldOne string // matches with StructB.FieldOne
@@ -151,10 +154,33 @@ If an object of type ```StructA``` and a pointer to an object of type ```StructB
 are passed into DeepCopy, then DeepCopy will attempt to copy all non-null ```StructA```
 fields into the object of type ```StructB```.
 
+Field types are not considered when determining whether two fields match.
 If a non-null ```StructA``` field has a matching ```StructB``` field whose
 type is incompatible with the original ```StructA```field's type (for example,
-a string array and a time.Time pointer), then DeepCopy will throw an
-[error](#unable-to-convert).
+a string array and a time.Time pointer), then DeepCopy will throw an Unable
+to Convert [error](#unable-to-convert), such as in the case below:
+```go
+import (
+    dc "github.com/fluidtruck/deepcopy"
+)
+
+type StructA struct {
+    Foo uint64
+}
+
+type StructB struct {
+    Foo bool
+}
+
+func main() {
+    a := StructA{Foo: uint64(12)}
+    b := StructB{}
+    err := dc.DeepCopy(a, &b)
+    if err ! = nil {
+        fmt.Println(err) // will print Err Could Not Convert
+    }
+}
+```
 
 All unexported fields (starting with a lowercase letter) are not considered by
 DeepCopy and will not be copied.
@@ -283,6 +309,8 @@ func main() {
     fmt.Println(b.Zak) // true
 }
 ```
+
+
 
 ### Errors
 
