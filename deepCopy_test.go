@@ -56,6 +56,15 @@ type LocalTime struct {
 	Time4 *timestamppb.Timestamp
 }
 
+type WeirdA struct {
+	state string // unexported
+	State string
+}
+
+type WeirdB struct {
+	State string
+}
+
 type LocalFunky struct {
 	Hello string `dc:"hi"`
 	Sup   int
@@ -163,6 +172,27 @@ func TestDeepCopy(t *testing.T) {
 			},
 			outputPtr:   &NewStruct2{},
 			expectedErr: errors.New("unable to convert %!s(int32=12) (type int32) to type timestamppb.Timestamp"),
+		},
+		{
+			name: "input val has unexported field",
+			input: WeirdA{
+				state: "unexported",
+				State: "exported",
+			},
+			outputPtr: &WeirdB{},
+			expectedRespPtr: &WeirdB{
+				State: "exported",
+			},
+		},
+		{
+			name: "output val has unexported field",
+			input: WeirdB{
+				State: "exported",
+			},
+			outputPtr: &WeirdA{},
+			expectedRespPtr: &WeirdA{
+				State: "exported",
+			},
 		},
 		{
 			name: "extra input field with no match",

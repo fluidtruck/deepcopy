@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 func DeepCopy(input, output interface{}) error {
@@ -126,14 +128,6 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 				return err
 			}
 			startingCount = inValue.NumField()
-		} else if outValue.Type() == timestamppbType {
-			// the only time this should ever happen is if inValue is also timestamppb
-			// otherwise should be caught while type *timestamppb in reflect.Ptr case
-			if inValue.Type() != timestamppbType {
-				return errCouldNotConvert
-			}
-			outValue.Set(inValue)
-			startingCount = inValue.NumField()
 		} else if inValue.Kind() != reflect.Struct {
 			return errCouldNotConvert
 		}
@@ -142,9 +136,9 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 		for i := startingCount; i < inValNumField; i++ {
 			foundMatchingOutputField := false
 			inputField := inValue.Field(i)
-			inputFieldName := strings.ToLower(inValue.Type().Field(i).Name)
+			inputFieldName := inValue.Type().Field(i).Name
 			if !inputField.CanInterface() {
-				// skip un-exported fields
+				// skip unexported fields
 				continue
 			}
 
@@ -158,7 +152,13 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 					continue
 				}
 				outputField := outValue.Field(j)
-				outputFieldName := strings.ToLower(outValue.Type().Field(j).Name)
+				outputFieldName := outValue.Type().Field(j).Name
+				rune0, _ := utf8.DecodeRuneInString(outputFieldName)
+				if unicode.IsLower(rune0) {
+					// skip unexported fields
+					continue
+				}
+
 				if fieldsMatch(reflect.TypeOf(inValue.Interface()).Field(i), reflect.TypeOf(outValue.Interface()).Field(j)) {
 					if !inputField.IsValid() {
 						err = errors.New(errCouldNotConvert.Error() + fmt.Sprintf(": field %s is invalid", inputFieldName))
@@ -276,6 +276,7 @@ func convertToTimestampPbPointer(inValue, outValue reflect.Value) error {
 }
 
 func fieldsMatch(inField, outField reflect.StructField) bool {
+
 	inFieldName := strings.ToLower(inField.Name)
 	outFieldName := strings.ToLower(outField.Name)
 	if inFieldName == "" || outFieldName == "" {
