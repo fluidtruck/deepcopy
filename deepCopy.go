@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -47,11 +48,13 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 
 	// check for string exceptions
 	if inValue.Kind() == reflect.String {
-		noError := parseStringFlexibly(inValue, outValue)
-		if !noError {
-			return errCouldNotConvert
+		attempted, noError := parseStringFlexibly(inValue, outValue)
+		if attempted {
+			if !noError {
+				return errCouldNotConvert
+			}
+			return
 		}
-		return
 	}
 
 	switch outValue.Kind() {
@@ -278,21 +281,118 @@ func CanConvert(v reflect.Value, t reflect.Type) bool {
 	return true
 }
 
-func parseStringFlexibly(inValue, outValue reflect.Value) bool {
+// TODO: test for converting string to every one of these types
+func parseStringFlexibly(inValue, outValue reflect.Value) (didAttempt bool, worked bool) {
+	// bool #1 represents "Did we try to convert?"
+	didAttempt = true
+	// bool #2 represents whether conversion worked
+	worked = true
+	// if bool #1 is false, then bool #2 is ignored
 	if inValue.Kind() != reflect.String {
-		return false
+		return false, true
 	}
+	s := strings.ToLower(inValue.String())
 	switch outValue.Kind() {
+	default:
+		didAttempt = false
 	case reflect.Bool:
-		s := strings.ToLower(inValue.String())
 		if s == "t" || s == "true" {
 			outValue.SetBool(true)
-			return true
 		} else if s == "f" || s == "false" {
 			outValue.SetBool(false)
-			return true
+		} else {
+			worked = false
 		}
+	case reflect.Int, reflect.Int64:
+		parsedString, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return true, false
+		}
+		val := reflect.ValueOf(parsedString)
+		outValue.Set(val)
+	case reflect.Int8:
+		parsedString, err := strconv.ParseInt(s, 10, 8)
+		if err != nil {
+			return true, false
+		}
+		num := int8(parsedString)
+		val := reflect.ValueOf(num)
+		outValue.Set(val)
+	case reflect.Int16:
+		parsedString, err := strconv.ParseInt(s, 10, 16)
+		if err != nil {
+			return true, false
+		}
+		num := int16(parsedString)
+		val := reflect.ValueOf(num)
+		outValue.Set(val)
+	case reflect.Int32:
+		parsedString, err := strconv.ParseInt(s, 10, 32)
+		if err != nil {
+			return true, false
+		}
+		num := int32(parsedString)
+		val := reflect.ValueOf(num)
+		outValue.Set(val)
+	case reflect.Uint, reflect.Uint64:
+		parsedString, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return true, false
+		}
+		val := reflect.ValueOf(parsedString)
+		outValue.Set(val)
+	case reflect.Uint8:
+		parsedString, err := strconv.ParseUint(s, 10, 8)
+		if err != nil {
+			return true, false
+		}
+		num := uint8(parsedString)
+		val := reflect.ValueOf(num)
+		outValue.Set(val)
+	case reflect.Uint16:
+		parsedString, err := strconv.ParseUint(s, 10, 16)
+		if err != nil {
+			return true, false
+		}
+		num := uint16(parsedString)
+		val := reflect.ValueOf(num)
+		outValue.Set(val)
+	case reflect.Uint32:
+		parsedString, err := strconv.ParseUint(s, 10, 32)
+		if err != nil {
+			return true, false
+		}
+		num := uint32(parsedString)
+		val := reflect.ValueOf(num)
+		outValue.Set(val)
+	case reflect.Float64:
+		parsedString, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return true, false
+		}
+		val := reflect.ValueOf(parsedString)
+		outValue.Set(val)
+	case reflect.Float32:
+		parsedString, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return true, false
+		}
+		num := float32(parsedString)
+		val := reflect.ValueOf(num)
+		outValue.Set(val)
 	}
 
-	return false
+	return
+}
+
+func getBitSizeByKind(kind reflect.Kind) int {
+	switch kind {
+	case reflect.Int8, reflect.Uint8:
+		return 8
+	case reflect.Int16, reflect.Uint16:
+		return 16
+	case reflect.Int32, reflect.Uint32, reflect.Float32:
+		return 32
+	}
+	return 64
 }
