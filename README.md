@@ -26,10 +26,6 @@ directed field matching.
 * Examples
     * [Basic Example](#basic-example)
     * [Pointers](#pointers)
-    * [Nested Structs](#nested-structs)
-    * [Slices](#slices)
-    * [Time](#time)
-    * [protobuf.Timestamppb](#protobuf.timestamppb)
     * [Errors](#errors)
 
 ## How to Install
@@ -309,7 +305,7 @@ func main() {
     fmt.Println(b.Zak) // true
 }
 ```
-
+Take a look at the test files for more specific examples.
 
 
 ### Errors
