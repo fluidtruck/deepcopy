@@ -32,6 +32,7 @@ const (
 
 var (
 	timeType           = reflect.TypeOf(time.Time{})
+	timePtrType        = reflect.TypeOf(&time.Time{})
 	timestamppbType    = reflect.TypeOf(timestamppb.Timestamp{})
 	timestamppbPtrType = reflect.TypeOf(&timestamppb.Timestamp{})
 )
@@ -44,8 +45,6 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 	}
 	done := false
 
-	fmt.Println("outValue.Kind", outValue.Kind())
-
 	// check for string exceptions
 	if inValue.Kind() == reflect.String {
 		attempted, noError := parseStringFlexibly(inValue, outValue)
@@ -55,6 +54,18 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 			}
 			return
 		}
+	}
+
+	fmt.Println("inValue:", inValue.Kind(), reflect.TypeOf(inValue), inValue.Type())
+	fmt.Println("outValue:", outValue.Kind(), reflect.TypeOf(outValue), outValue.Type())
+
+	// handle special case of *timestamppb -> *time
+	if inValue.Type() == timestamppbPtrType {
+		err = convertFromTimestampPbPointer(inValue, outValue)
+		if err != nil {
+			return err
+		}
+		return
 	}
 
 	switch outValue.Kind() {
@@ -209,12 +220,39 @@ func convertToTime(inValue, outValue reflect.Value) error {
 		newOutVal := reflect.New(reflect.TypeOf(inTime))
 		newOutVal.Elem().Set(inTimeVal)
 		outValue.Set(newOutVal.Elem())
-	case timestamppbType:
-		inTimePreConvert := inValue.Interface().(timestamppb.Timestamp)
-		inTimePreConvertPtr := &inTimePreConvert
-		inTime := inTimePreConvertPtr.AsTime()
+	case timestamppbPtrType:
+		inTimePreConvert := inValue.Interface().(*timestamppb.Timestamp)
+		inTime := inTimePreConvert.AsTime()
 		inTimeVal := reflect.ValueOf(inTime)
 		newOutVal := reflect.New(reflect.TypeOf(inTime))
+		newOutVal.Elem().Set(inTimeVal)
+		outValue.Set(newOutVal.Elem())
+	default:
+		return errCouldNotConvert
+	}
+	return nil
+}
+
+func convertFromTimestampPbPointer(inValue, outValue reflect.Value) error {
+	errCouldNotConvert := fmt.Errorf("unable to convert %s (type %s) to type %s", inValue.Interface(), inValue.Type(), outValue.Type())
+	if inValue.Type() != timestamppbPtrType {
+		return errCouldNotConvert
+	}
+	switch outValue.Type() {
+	case timestamppbPtrType:
+		outValue.Set(inValue)
+	case timeType:
+		inTimePreConvert := inValue.Interface().(*timestamppb.Timestamp)
+		inTime := inTimePreConvert.AsTime()
+		inTimeVal := reflect.ValueOf(inTime)
+		newOutVal := reflect.New(reflect.TypeOf(inTime))
+		newOutVal.Elem().Set(inTimeVal)
+		outValue.Set(newOutVal.Elem())
+	case timePtrType:
+		inTimePreConvert := inValue.Interface().(*timestamppb.Timestamp)
+		inTime := inTimePreConvert.AsTime()
+		inTimeVal := reflect.ValueOf(&inTime)
+		newOutVal := reflect.New(reflect.TypeOf(&inTime))
 		newOutVal.Elem().Set(inTimeVal)
 		outValue.Set(newOutVal.Elem())
 	default:
@@ -234,10 +272,6 @@ func convertToTimestampPbPointer(inValue, outValue reflect.Value) error {
 		inTimePtr := timestamppb.New(inTimePreConvert) // returns *timestamppb.Timestamp
 		inTimePtrVal := reflect.ValueOf(inTimePtr)
 		outValue.Set(inTimePtrVal)
-	case timestamppbType:
-		inTime := inValue.Interface().(timestamppb.Timestamp)
-		inTimeVal := reflect.ValueOf(&inTime)
-		outValue.Set(inTimeVal)
 	case timestamppbPtrType:
 		outValue.Set(inValue)
 	default:
@@ -383,16 +417,4 @@ func parseStringFlexibly(inValue, outValue reflect.Value) (didAttempt bool, work
 	}
 
 	return
-}
-
-func getBitSizeByKind(kind reflect.Kind) int {
-	switch kind {
-	case reflect.Int8, reflect.Uint8:
-		return 8
-	case reflect.Int16, reflect.Uint16:
-		return 16
-	case reflect.Int32, reflect.Uint32, reflect.Float32:
-		return 32
-	}
-	return 64
 }

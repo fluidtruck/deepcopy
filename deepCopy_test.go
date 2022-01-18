@@ -33,6 +33,14 @@ type PbInspection struct {
 	RandomTime2   *time.Time
 }
 
+type JustTimeA struct {
+	RandomTime *time.Time
+}
+
+type JustTimeB struct {
+	RandomTime *timestamppb.Timestamp
+}
+
 type PbTime struct {
 	Time0 timestamppb.Timestamp
 	Time  *timestamppb.Timestamp
@@ -105,10 +113,6 @@ const (
 )
 
 type InspectionType int32
-
-const (
-	INSPECTION_TYPE_PICKUP InspectionType = 1
-)
 
 type NewStruct1 struct {
 	Field                  int64
@@ -255,12 +259,12 @@ func TestDeepCopy(t *testing.T) {
 		},
 		{
 			name: "timestamp to time",
-			input: &LocalInspection{
-				RandomTime2: timestamppb1,
+			input: &JustTimeB{
+				RandomTime: timestamppb1,
 			},
-			outputPtr: &PbInspection{},
-			expectedRespPtr: &PbInspection{
-				RandomTime2: &time1,
+			outputPtr: &JustTimeA{},
+			expectedRespPtr: &JustTimeA{
+				RandomTime: &time1,
 			},
 		},
 		{
