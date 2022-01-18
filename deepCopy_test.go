@@ -529,8 +529,8 @@ func TestDeepCopyToTimestamp(t *testing.T) {
 				if e.Time2 != nil {
 					ee := e.Time2
 					rr := r.Time2
-					assert.Equal(t, ee.GetSeconds, rr.GetSeconds)
-					assert.Equal(t, ee.GetNanos, rr.GetNanos)
+					assert.Equal(t, ee.GetSeconds(), rr.GetSeconds())
+					assert.Equal(t, ee.GetNanos(), rr.GetNanos())
 				}
 				if e.Time3 != nil {
 					assert.Equal(t, e.Time3, r.Time3)
