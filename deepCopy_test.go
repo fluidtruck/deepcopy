@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"testing"
 	"time"
 )
@@ -521,16 +521,16 @@ func TestDeepCopyToTimestamp(t *testing.T) {
 				assert.Equal(t, e.Time0.Seconds, r.Time0.Seconds)
 				assert.Equal(t, e.Time0.Nanos, r.Time0.Nanos)
 				if e.Time != nil {
-					ee := *e.Time
-					rr := *r.Time
-					assert.Equal(t, ee.Seconds, rr.Seconds)
-					assert.Equal(t, ee.Nanos, rr.Nanos)
+					ee := e.Time
+					rr := r.Time
+					assert.Equal(t, ee.GetSeconds(), rr.GetSeconds())
+					assert.Equal(t, ee.GetNanos(), rr.GetNanos())
 				}
 				if e.Time2 != nil {
-					ee := *e.Time2
-					rr := *r.Time2
-					assert.Equal(t, ee.Seconds, rr.Seconds)
-					assert.Equal(t, ee.Nanos, rr.Nanos)
+					ee := e.Time2
+					rr := r.Time2
+					assert.Equal(t, ee.GetSeconds, rr.GetSeconds)
+					assert.Equal(t, ee.GetNanos, rr.GetNanos)
 				}
 				if e.Time3 != nil {
 					assert.Equal(t, e.Time3, r.Time3)

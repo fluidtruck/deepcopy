@@ -45,7 +45,7 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 	}
 	done := false
 
-	// check for string exceptions
+	// handle string -> number
 	if inValue.Kind() == reflect.String {
 		attempted, noError := parseStringFlexibly(inValue, outValue)
 		if attempted {
@@ -56,12 +56,15 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 		}
 	}
 
-	fmt.Println("inValue:", inValue.Kind(), reflect.TypeOf(inValue), inValue.Type())
-	fmt.Println("outValue:", outValue.Kind(), reflect.TypeOf(outValue), outValue.Type())
-
-	// handle special case of *timestamppb -> *time
+	// handle *timestamppb.Timestamp
 	if inValue.Type() == timestamppbPtrType {
 		err = convertFromTimestampPbPointer(inValue, outValue)
+		if err != nil {
+			return err
+		}
+		return
+	} else if outValue.Type() == timestamppbPtrType {
+		err = convertToTimestampPbPointer(inValue, outValue)
 		if err != nil {
 			return err
 		}
@@ -99,30 +102,22 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 		outValue.Set(newOutValue)
 		done = true
 	case reflect.Ptr:
-		if outValue.Type() == timestamppbPtrType {
-			err = convertToTimestampPbPointer(inValue, outValue)
-			if err != nil {
-				return err
-			}
-			done = true
-		} else {
-			outValueInterfaceTypeOfElem := reflect.TypeOf(outValue.Interface()).Elem()
-			childOutVal := reflect.New(reflect.TypeOf(inValue.Interface()))
-			err := smartCopy(inValue, childOutVal.Elem())
-			if err != nil {
-				return err
-			}
-			childOutValOut := reflect.New(outValueInterfaceTypeOfElem)
-			childOutValElemNonPtr := smartMaxDereference(childOutVal.Elem(), childOutValOut.Elem())
-			err = smartCopy(childOutValElemNonPtr, childOutValOut.Elem())
-			if err != nil {
-				return err
-			}
-			outValuePtr := reflect.New(reflect.TypeOf(childOutValOut.Elem().Interface()))
-			outValuePtr.Elem().Set(reflect.ValueOf(childOutValOut.Elem().Interface()))
-			outValue.Set(outValuePtr)
-			done = true
+		outValueInterfaceTypeOfElem := reflect.TypeOf(outValue.Interface()).Elem()
+		childOutVal := reflect.New(reflect.TypeOf(inValue.Interface()))
+		err := smartCopy(inValue, childOutVal.Elem())
+		if err != nil {
+			return err
 		}
+		childOutValOut := reflect.New(outValueInterfaceTypeOfElem)
+		childOutValElemNonPtr := smartMaxDereference(childOutVal.Elem(), childOutValOut.Elem())
+		err = smartCopy(childOutValElemNonPtr, childOutValOut.Elem())
+		if err != nil {
+			return err
+		}
+		outValuePtr := reflect.New(reflect.TypeOf(childOutValOut.Elem().Interface()))
+		outValuePtr.Elem().Set(reflect.ValueOf(childOutValOut.Elem().Interface()))
+		outValue.Set(outValuePtr)
+		done = true
 	case reflect.Struct:
 		startingCount := 0
 		if outValue.Type() == timeType {
