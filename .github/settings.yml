@@ -2,7 +2,6 @@ repository:
   # See https://developer.github.com/v3/repos/#edit for all available settings.
   name: deepcopy
   description: The deepcopy library.
-  homepage: https://deepcopy.fluidtruck.io
   default_branch: main
 
   has_issues: false
