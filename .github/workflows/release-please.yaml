@@ -12,7 +12,6 @@ jobs:
       - uses: google-github-actions/release-please-action@v3
         with:
           release-type: simple
-          bump-minor-pre-major: true
           changelog-types: |-
             [
               {"type":"feat","section":":sparkles: Features","hidden":false},
