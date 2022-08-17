@@ -1,8 +1,0 @@
-issues:
-  exclude-rules:
-    - linters:
-        - structcheck
-      text: "`tableName`"
-    - linters:
-        - unused
-      text: "field `tableName`"
