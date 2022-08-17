@@ -40,9 +40,10 @@ branches:
       required_status_checks:
         strict: false
         contexts:
+          - setup
           - lint
           - test
-          - boost-security-scan
+          - preview
           - Semantic Pull Request
       restrictions:
         users:

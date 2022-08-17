@@ -9,53 +9,84 @@ on:
       - main
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    outputs:
+      comment-id: ${{ steps.setup.outputs.comment-id }}
+    steps:
+      - uses: daspn/private-actions-checkout@v2
+        id: actions
+        with:
+          actions_list: '["fluidtruck/github-actions-golang@v1"]'
+          app_id: ${{ secrets.PRIVATE_ACTIONS_APP_ID }}
+          app_private_key: ${{ secrets.PRIVATE_ACTIONS_KEY }}
+          return_app_token: true
+
+      - uses: ./.github/actions/github-actions-golang/actions/setup
+        id: setup
+        with:
+          app-token: ${{ steps.actions.outputs.app-token }}
+
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [setup]
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: daspn/private-actions-checkout@v2
+        id: actions
+        with:
+          actions_list: '["fluidtruck/github-actions-golang@v1"]'
+          app_id: ${{ secrets.PRIVATE_ACTIONS_APP_ID }}
+          app_private_key: ${{ secrets.PRIVATE_ACTIONS_KEY }}
+
+      - uses: ./.github/actions/github-actions-golang/actions/lint
+        with:
+          github-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
+
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [lint]
     outputs:
-      comment-id: ${{ steps.comment.outputs.comment_id }}
       coverage: ${{ steps.test.outputs.coverage }}
     steps:
-      - name: Wait for Previous Runs (Release Pull Request)
-        if: ${{ contains(github.head_ref, 'release-v') }}
-        uses: ahmadnassri/action-workflow-queue@v1
+      - uses: actions/checkout@v3
 
-      - name: Cancel Previous Runs
-        if: ${{ !contains(github.head_ref, 'release-v') }}
-        uses: styfle/cancel-workflow-action@0.9.1
+      - uses: daspn/private-actions-checkout@v2
+        id: actions
         with:
-          access_token: ${{ secrets.GITHUB_TOKEN }}
-          all_but_latest: true
+          actions_list: '["fluidtruck/github-actions-golang@v1"]'
+          app_id: ${{ secrets.PRIVATE_ACTIONS_APP_ID }}
+          app_private_key: ${{ secrets.PRIVATE_ACTIONS_KEY }}
 
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup Golang
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
-
-      - name: Cache Go Dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Configure Git
-        env:
-          GITHUB_TOKEN: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
-        run: |
-          git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/fluidshare/".insteadOf "https://github.com/fluidshare/"
-          git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/fluidtruck/".insteadOf "https://github.com/fluidtruck/"
-
-      - name: Run Tests
+      - uses: ./.github/actions/github-actions-golang/actions/test
         id: test
-        run: |
-          go test -v -coverprofile=coverage.out -covermode=count ./...
-          total=`go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
-          echo "got total"
-          echo $total
-          echo ::set-output name=coverage::$total
+        with:
+          github-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
+
+  preview:
+    runs-on: ubuntu-latest
+    permissions: {}
+    if: ${{ always() }}%
+    needs: [setup, test]
+    steps:
+      - uses: daspn/private-actions-checkout@v2
+        id: actions
+        with:
+          actions_list: '["fluidtruck/github-actions-golang@v1"]'
+          app_id: ${{ secrets.PRIVATE_ACTIONS_APP_ID }}
+          app_private_key: ${{ secrets.PRIVATE_ACTIONS_KEY }}
+          return_app_token: true
+
+      - uses: ./.github/actions/github-actions-golang/actions/preview
+        with:
+          app-token: ${{ steps.actions.outputs.app-token }}
+          comment-id: ${{ needs.setup.outputs.comment-id }}
+          coverage: ${{ needs.test.outputs.coverage }}
+          status: ${{ needs.deploy.result }}
