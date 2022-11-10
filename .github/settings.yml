@@ -3,6 +3,7 @@ repository:
   name: deepcopy
   description: The deepcopy library.
   default_branch: main
+  topics: domain-platform, aries
 
   has_issues: false
   has_wiki: false
