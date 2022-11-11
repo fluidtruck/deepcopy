@@ -47,6 +47,7 @@ jobs:
       - uses: ./.github/actions/github-actions-golang/actions/lint
         with:
           github-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
+          go-version: 1.19
 
   test:
     runs-on: ubuntu-latest
@@ -69,6 +70,7 @@ jobs:
         id: test
         with:
           github-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
+          go-version: 1.19
 
   preview:
     runs-on: ubuntu-latest
