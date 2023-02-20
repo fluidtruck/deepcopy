@@ -8,26 +8,23 @@ on:
     branches:
       - main
 
+env:
+  GOLANG_VERSION: '1.19'
+
 jobs:
   setup:
     runs-on: ubuntu-latest
     permissions:
       actions: write
+      issues: write
+      pull-requests: write
     outputs:
       comment-id: ${{ steps.setup.outputs.comment-id }}
     steps:
-      - uses: daspn/private-actions-checkout@v2
-        id: actions
-        with:
-          actions_list: '["fluidtruck/github-actions-golang@v1"]'
-          app_id: ${{ secrets.PRIVATE_ACTIONS_APP_ID }}
-          app_private_key: ${{ secrets.PRIVATE_ACTIONS_KEY }}
-          return_app_token: true
-
-      - uses: ./.github/actions/github-actions-golang/actions/setup
+      - uses: fluidtruck-platform/github-actions/setup@v2
         id: setup
         with:
-          app-token: ${{ steps.actions.outputs.app-token }}
+          app-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
 
   lint:
     runs-on: ubuntu-latest
@@ -37,58 +34,47 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: daspn/private-actions-checkout@v2
-        id: actions
-        with:
-          actions_list: '["fluidtruck/github-actions-golang@v1"]'
-          app_id: ${{ secrets.PRIVATE_ACTIONS_APP_ID }}
-          app_private_key: ${{ secrets.PRIVATE_ACTIONS_KEY }}
-
-      - uses: ./.github/actions/github-actions-golang/actions/lint
+      - uses: fluidtruck-platform/github-actions/lint@v2
         with:
           github-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
-          go-version: 1.19
+          golang-version: ${{ env.GOLANG_VERSION }}
 
   test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint]
+      issues: write
+      pull-requests: write
+    needs: [setup, lint]
     outputs:
       coverage: ${{ steps.test.outputs.coverage }}
     steps:
       - uses: actions/checkout@v3
 
-      - uses: daspn/private-actions-checkout@v2
-        id: actions
-        with:
-          actions_list: '["fluidtruck/github-actions-golang@v1"]'
-          app_id: ${{ secrets.PRIVATE_ACTIONS_APP_ID }}
-          app_private_key: ${{ secrets.PRIVATE_ACTIONS_KEY }}
-
-      - uses: ./.github/actions/github-actions-golang/actions/test
+      - uses: fluidtruck-platform/github-actions/test@v2
         id: test
         with:
           github-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
-          go-version: 1.19
+          golang-version: ${{ env.GOLANG_VERSION }}
+
+      - uses: fluidtruck-platform/github-actions/preview@v2
+        with:
+          app-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
+          comment-id: ${{ needs.setup.outputs.comment-id }}
+          coverage: ${{ steps.test.outputs.coverage }}
 
   preview:
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     if: ${{ always() }}%
     needs: [setup, test]
     steps:
-      - uses: daspn/private-actions-checkout@v2
-        id: actions
+      - uses: fluidtruck-platform/github-actions/preview@v2
         with:
-          actions_list: '["fluidtruck/github-actions-golang@v1"]'
-          app_id: ${{ secrets.PRIVATE_ACTIONS_APP_ID }}
-          app_private_key: ${{ secrets.PRIVATE_ACTIONS_KEY }}
-          return_app_token: true
-
-      - uses: ./.github/actions/github-actions-golang/actions/preview
-        with:
-          app-token: ${{ steps.actions.outputs.app-token }}
+          app-token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
           comment-id: ${{ needs.setup.outputs.comment-id }}
           coverage: ${{ needs.test.outputs.coverage }}
-          status: ${{ needs.deploy.result }}
+          status: ${{ needs.test.result }}
