@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/fluidtruck/deepcopy/compare/v1.0.0...v1.1.0) (2023-03-10)
+
+
+### :wrench: Chores
+
+* updating to go 1.19 ([#7](https://github.com/fluidtruck/deepcopy/issues/7)) ([a68c53b](https://github.com/fluidtruck/deepcopy/commit/a68c53ba56457699edf3963baa4a7a06b10c5f74))
+
+
+### :sparkles: Features
+
+* enable dependabot checks ([#10](https://github.com/fluidtruck/deepcopy/issues/10)) ([cb5861d](https://github.com/fluidtruck/deepcopy/commit/cb5861d774f75fe59604f33ac478fcae25aac574))
+
 ## 1.0.0 (2022-08-17)
 
 
