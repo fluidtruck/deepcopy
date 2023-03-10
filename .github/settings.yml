@@ -1,7 +1,7 @@
 repository:
-  # See https://developer.github.com/v3/repos/#edit for all available settings.
   name: deepcopy
   description: The deepcopy library.
+  private: false
   default_branch: main
   topics: domain-platform, aries
 
@@ -15,26 +15,40 @@ repository:
   allow_auto_merge: false
   delete_branch_on_merge: true
 
+  enable_automated_security_fixes: true
+  enable_vulnerability_alerts: true
+
+labels:
+  - name: actions
+    color: F9D0C4
+    description: GitHub Actions
+  - name: dependabot
+    color: FEF2C0
+    description: Dependabot
+  - name: docker
+    color: BFDADC
+    description: Docker
+  - name: go
+    color: C2E0C6
+    description: Go
+
 collaborators:
   - username: fluid-devbot
     permission: admin
 
 teams:
-  - name: security
-    permission: admin
+  - name: backend
+    permission: push
   - name: devops
+    permission: admin
+  - name: security
     permission: admin
   - name: qa
     permission: pull
-  - name: backend
-    permission: push
 
 branches:
   - name: main
     protection:
-      enforce_admins: false
-      required_linear_history: true
-      required_signatures: false
       required_pull_request_reviews:
         required_approving_review_count: 1
         dismiss_stale_reviews: true
@@ -46,10 +60,12 @@ branches:
           - test
           - preview
           - Semantic Pull Request
+      enforce_admins: false
+      required_linear_history: true
       restrictions:
         users:
           - fluid-devbot
         teams:
+          - backend
           - devops
           - security
-          - backend
