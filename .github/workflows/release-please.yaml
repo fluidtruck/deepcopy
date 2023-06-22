@@ -1,27 +1,12 @@
 name: release-please
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
 
 jobs:
-  release-please:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: google-github-actions/release-please-action@v3
-        with:
-          token: ${{ secrets.DEVBOT_GITHUB_TOKEN }}
-          release-type: go
-          changelog-types: |-
-            [
-              {"type":"feat","section":":sparkles: Features","hidden":false},
-              {"type":"fix","section":":bug: Bug Fixes","hidden":false},
-              {"type":"style","section":":gem: Styles","hidden":false},
-              {"type":"refactor","section":":hammer: Code Refactoring","hidden":false},
-              {"type":"perf","section":":rocket: Performance Improvements","hidden":false},
-              {"type":"build","section":":package: Builds","hidden":false},
-              {"type":"chore","section":":wrench: Chores","hidden":false},
-              {"type":"revert","section":":warning: Reverts","hidden":false},
-              {"type":"ci","section":":robot: CI/CD","hidden":false}
-            ]
+  release:
+    uses: fluidtruck-platform/github-workflows/.github/workflows/release-please.yml@v1
+    secrets: inherit

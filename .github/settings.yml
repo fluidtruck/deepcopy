@@ -55,10 +55,10 @@ branches:
       required_status_checks:
         strict: false
         contexts:
-          - setup
-          - lint
-          - test
-          - preview
+          - ci / setup
+          - ci / lint
+          - ci / test
+          - ci / preview
           - Semantic Pull Request
       enforce_admins: false
       required_linear_history: true
