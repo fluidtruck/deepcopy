@@ -85,10 +85,26 @@ func smartCopy(inValue reflect.Value, outValue reflect.Value) (err error) {
 		outValue.Set(inValue)
 		done = true
 	case reflect.Slice:
-		if inValue.Kind() != reflect.Slice {
+		isSlice := inValue.Kind() == reflect.Slice
+		isString := inValue.Kind() == reflect.String
+
+		if !isSlice && !isString {
 			return errCouldNotConvert
 		}
+
 		sliceType := reflect.TypeOf(outValue.Interface())
+		sliceItemType := sliceType.Elem().Kind()
+
+		// During runtime: []byte == []uint8
+		if isString && sliceItemType != reflect.Uint8 {
+			return errCouldNotConvert
+		}
+
+		if isString {
+			actualValue := inValue.String()
+			inValue = reflect.ValueOf([]byte(actualValue))
+		}
+
 		newOutValue := reflect.MakeSlice(sliceType, inValue.Len(), inValue.Len())
 		for i := 0; i < inValue.Len(); i++ {
 			inVal := inValue.Index(i)

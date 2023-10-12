@@ -115,6 +115,14 @@ type Thing2 struct {
 	B              uint
 }
 
+type HTTPResponse struct {
+	Body []byte
+}
+
+type HTTPResponse2 struct {
+	Body string
+}
+
 type LocalInspectionType string
 
 const (
@@ -149,6 +157,7 @@ type ClassroomB struct {
 func TestDeepCopy(t *testing.T) {
 	optionalString1 := "pointer string"
 	stringPointer1 := &optionalString1
+	optionalString1Bytes := []byte(optionalString1)
 	num1 := uint64(5)
 	emptyString := ""
 	otherNum1 := uint(5)
@@ -433,6 +442,26 @@ func TestDeepCopy(t *testing.T) {
 			outputPtr: &Thing{},
 			expectedRespPtr: &Thing{
 				B: &num1,
+			},
+		},
+		{
+			name: "string to []byte",
+			input: &HTTPResponse2{
+				Body: optionalString1,
+			},
+			outputPtr: &HTTPResponse{},
+			expectedRespPtr: &HTTPResponse{
+				Body: optionalString1Bytes,
+			},
+		},
+		{
+			name: "[]byte to string",
+			input: &HTTPResponse{
+				Body: optionalString1Bytes,
+			},
+			outputPtr: &HTTPResponse2{},
+			expectedRespPtr: &HTTPResponse2{
+				Body: optionalString1,
 			},
 		},
 		{

@@ -122,6 +122,20 @@ var (
 	ex6Float64      = 6.4
 )
 
+// Example 7
+var (
+	ex7String         = "example string"
+	ex7EmptyByteSlice []byte
+	ex7ByteSlice      = []byte("example string")
+)
+
+// Example 8
+var (
+	ex8ByteArray   = []byte("example string")
+	ex8EmptyString string
+	ex8String      = "example string"
+)
+
 func TestDeepCopyExamples(t *testing.T) {
 	testCases := []struct {
 		name              string
@@ -197,10 +211,22 @@ func TestDeepCopyExamples(t *testing.T) {
 			expectedOutputPtr: &ex5Bool,      // true
 		},
 		{
-			name:              "Example 5: type casting, string to float64",
+			name:              "Example 6: type casting, string to float64",
 			input:             ex6String,        // "6.4"
 			outputPtr:         &ex6EmptyFloat64, // empty float64
 			expectedOutputPtr: &ex6Float64,      // 6.4 (float64)
+		},
+		{
+			name:              "Example 7: type casting, string to []byte",
+			input:             ex7String,          // "example string"
+			outputPtr:         &ex7EmptyByteSlice, // empty []byte
+			expectedOutputPtr: &ex7ByteSlice,      // "example string" as a byte array
+		},
+		{
+			name:              "Example 8: type casting, []byte to string",
+			input:             ex8ByteArray,    // []byte("example string")
+			outputPtr:         &ex8EmptyString, // empty string
+			expectedOutputPtr: &ex8String,      // "example string"
 		},
 	}
 	for _, tc := range testCases {
